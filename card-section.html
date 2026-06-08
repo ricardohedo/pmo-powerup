@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="pmo.css">
+  <script src="https://p.trellocdn.com/power-up.min.js"></script>
+  <script src="pmo-rules.js"></script>
+</head>
+<body>
+<div id="root"><p class="loading">Verificando conformidade...</p></div>
+<script>
+var t = TrelloPowerUp.iframe();
+
+Promise.all([
+  t.card('idMembers', 'due', 'desc', 'checklists', 'dateLastActivity', 'badges'),
+  t.list('name')
+]).then(function (results) {
+  var card = results[0];
+  var list = results[1];
+  var root = document.getElementById('root');
+
+  if (PMO.ACTIVE_LISTS.indexOf(list.name) === -1) {
+    root.innerHTML = '<p class="ok-msg">Card em lista não ativa — sem verificação PMO.</p>';
+    return t.sizeTo('#root');
+  }
+
+  var issues  = PMO.getIssues(card, list.name);
+  var crits   = issues.filter(function (i) { return i.severity === 'critical'; });
+  var warns   = issues.filter(function (i) { return i.severity === 'warning'; });
+
+  if (issues.length === 0) {
+    root.innerHTML = '<p class="ok-msg">✅ Em conformidade com o padrão PMO BigBox.</p>';
+    return t.sizeTo('#root');
+  }
+
+  var html = '';
+  if (crits.length > 0) {
+    html += '<div class="section-label critical-label">🔴 Críticos (' + crits.length + ')</div>';
+    crits.forEach(function (i) {
+      html += '<div class="issue-item critical">• ' + i.text + '</div>';
+    });
+  }
+  if (warns.length > 0) {
+    html += '<div class="section-label warning-label">🟡 Alertas (' + warns.length + ')</div>';
+    warns.forEach(function (i) {
+      html += '<div class="issue-item warning">• ' + i.text + '</div>';
+    });
+  }
+
+  root.innerHTML = html;
+  return t.sizeTo('#root');
+}).catch(function () {
+  document.getElementById('root').innerHTML = '<p class="loading">Erro ao carregar dados do card.</p>';
+});
+</script>
+</body>
+</html>

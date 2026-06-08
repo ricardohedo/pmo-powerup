@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="pmo.css">
+  <script src="https://p.trellocdn.com/power-up.min.js"></script>
+  <script src="pmo-rules.js"></script>
+</head>
+<body>
+<div id="root"><p class="loading">Analisando quadro...</p></div>
+<script>
+var t = TrelloPowerUp.iframe();
+
+Promise.all([
+  t.lists('all'),
+  t.cards('id', 'name', 'idMembers', 'due', 'desc', 'checklists', 'dateLastActivity', 'badges', 'idList', 'closed')
+]).then(function (results) {
+  var lists = results[0];
+  var cards = results[1];
+
+  var listMap = {};
+  lists.forEach(function (l) { listMap[l.id] = l.name; });
+
+  var active = cards.filter(function (c) {
+    return !c.closed && PMO.ACTIVE_LISTS.indexOf(listMap[c.idList]) !== -1;
+  });
+
+  var checked = active.map(function (c) {
+    var listName = listMap[c.idList];
+    return { card: c, listName: listName, issues: PMO.getIssues(c, listName) };
+  });
+
+  var withIssues = checked.filter(function (r) { return r.issues.length > 0; });
+  var ok         = checked.filter(function (r) { return r.issues.length === 0; });
+  var withCrit   = checked.filter(function (r) {
+    return r.issues.some(function (i) { return i.severity === 'critical'; });
+  });
+
+  var html = '<div class="summary">';
+  html += stat(active.length,                   'Ativos',   '');
+  html += stat(withCrit.length,                 'Críticos', 'critical');
+  html += stat(withIssues.length - withCrit.length, 'Alertas',  'warning');
+  html += stat(ok.length,                       'OK',       'ok');
+  html += '</div>';
+
+  if (withIssues.length === 0) {
+    html += '<p class="ok-msg">✅ Todos os cards estão em conformidade com o padrão PMO BigBox!</p>';
+  } else {
+    // Críticos primeiro
+    withIssues.sort(function (a, b) {
+      var aC = a.issues.some(function (i) { return i.severity === 'critical'; }) ? 1 : 0;
+      var bC = b.issues.some(function (i) { return i.severity === 'critical'; }) ? 1 : 0;
+      return bC - aC;
+    });
+
+    html += '<div class="card-list">';
+    withIssues.forEach(function (r) {
+      var hasCrit = r.issues.some(function (i) { return i.severity === 'critical'; });
+      html += '<div class="card-row ' + (hasCrit ? 'has-critical' : 'has-warning') + '">';
+      html += '<div class="card-name" title="' + esc(r.card.name) + '">' + esc(r.card.name) + '</div>';
+      html += '<div class="card-list-tag">' + esc(r.listName) + '</div>';
+      html += '<div class="card-issues">';
+      r.issues.forEach(function (i) {
+        var icon = i.severity === 'critical' ? '🔴' : '🟡';
+        html += '<span class="issue-tag ' + i.severity + '">' + icon + ' ' + i.text + '</span>';
+      });
+      html += '</div></div>';
+    });
+    html += '</div>';
+  }
+
+  document.getElementById('root').innerHTML = html;
+}).catch(function () {
+  document.getElementById('root').innerHTML = '<p class="loading">Erro ao carregar dados do quadro.</p>';
+});
+
+function stat(val, label, cls) {
+  return '<div class="stat ' + cls + '"><span class="stat-val">' + val + '</span><span class="stat-label">' + label + '</span></div>';
+}
+
+function esc(str) {
+  if (!str) return '';
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+</script>
+</body>
+</html>

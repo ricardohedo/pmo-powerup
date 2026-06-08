@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="https://p.trellocdn.com/power-up.min.js"></script>
+  <script src="pmo-rules.js"></script>
+</head>
+<body>
+<script>
+TrelloPowerUp.initialize({
+
+  'card-badges': function (t) {
+    return Promise.all([
+      t.card('idMembers', 'due', 'desc', 'checklists', 'dateLastActivity', 'badges'),
+      t.list('name')
+    ]).then(function (results) {
+      var card = results[0];
+      var list = results[1];
+      if (PMO.ACTIVE_LISTS.indexOf(list.name) === -1) return [];
+      var issues = PMO.getIssues(card, list.name);
+      return PMO.buildBadges(issues);
+    }).catch(function () { return []; });
+  },
+
+  'card-back-section': function (t) {
+    return {
+      title: 'Conformidade PMO BigBox',
+      icon: 'https://cdn-icons-png.flaticon.com/512/1864/1864514.png',
+      content: {
+        type: 'iframe',
+        url: t.signUrl('./card-section.html'),
+        height: 200
+      }
+    };
+  },
+
+  'board-buttons': function (t) {
+    return [{
+      icon: {
+        dark:  'https://cdn-icons-png.flaticon.com/512/1864/1864514.png',
+        light: 'https://cdn-icons-png.flaticon.com/512/1864/1864514.png'
+      },
+      text: 'Relatório PMO',
+      callback: function (t) {
+        return t.popup({
+          title: 'Relatório PMO BigBox',
+          url: './board-report.html',
+          height: 520
+        });
+      }
+    }];
+  }
+
+});
+</script>
+</body>
+</html>
