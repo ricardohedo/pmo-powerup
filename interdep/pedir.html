@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="https://p.trellocdn.com/power-up.min.css">
+<link rel="stylesheet" href="./estilo.css">
+<script src="https://p.trellocdn.com/power-up.min.js"></script>
+<script src="./config.js"></script>
+<script src="./nucleo.js"></script>
+<script src="./api.js"></script>
+</head>
+<body>
+<div id="c"><small>Carregando…</small></div>
+<script>
+var CFG = window.PMO_INTERDEP || {};
+var t = TrelloPowerUp.iframe({ appKey: CFG.APP_KEY, appName: CFG.APP_NAME });
+var c = document.getElementById("c");
+function ajustar() { t.sizeTo(c.offsetHeight + 16); }
+
+async function montar() {
+  if (!InterdepApi.configurado()) { c.innerHTML = "<small>Power-Up ainda não configurado.</small>"; return ajustar(); }
+  var atual = Interdep.shortLinkDaUrl((await t.board("url")).url);
+  var outras = (CFG.AREAS || []).filter(function (a) { return a.key !== atual; });
+  if (!outras.length) { c.innerHTML = "<small>Não há outra área liberada.</small>"; return ajustar(); }
+
+  c.innerHTML =
+    "<small>Cria um card no quadro da outra área (lista de entrada) ligado a este projeto. " +
+    "A outra área vê só o escopo e o andamento deste projeto; o seu quadro continua privado.</small>" +
+    '<label for="area">Área</label><select id="area">' +
+    outras.map(function (a) { return '<option value="' + Interdep.esc(a.key) + '">' + Interdep.esc(a.nome) + "</option>"; }).join("") + "</select>" +
+    '<label for="titulo">O que você precisa</label><input id="titulo" maxlength="120" placeholder="Ex.: Liberar acesso à API de pedidos">' +
+    '<label for="detalhe">Detalhes</label><textarea id="detalhe" maxlength="3000" placeholder="Contexto, critério de pronto, contato…"></textarea>' +
+    '<label for="prazo">Prazo</label><input id="prazo" type="date">' +
+    '<button class="mod-primary" id="ok">Enviar pedido</button><div id="msg" aria-live="polite"></div>';
+  ajustar();
+
+  document.getElementById("ok").onclick = async function () {
+    var msg = document.getElementById("msg"), btn = this;
+    var dados = {
+      area: document.getElementById("area").value,
+      titulo: document.getElementById("titulo").value.trim(),
+      detalhe: document.getElementById("detalhe").value.trim(),
+      prazo: document.getElementById("prazo").value || null,
+    };
+    if (dados.titulo.length < 3) { msg.innerHTML = '<small class="erro">Escreva o que você precisa (mínimo 3 letras).</small>'; return ajustar(); }
+    btn.disabled = true; msg.innerHTML = "<small>Enviando…</small>"; ajustar();
+    try {
+      if (!(await t.getRestApi().isAuthorized())) await InterdepApi.autorizar(t);
+      dados.cardId = (await t.card("id")).id;
+      var r = await InterdepApi.pedir(t, dados);
+      msg.innerHTML = r.jaExistia
+        ? "<small>Esse pedido já existia para " + Interdep.esc(r.area) + ".</small>"
+        : "<small>✓ Pedido criado no quadro de " + Interdep.esc(r.area) + ".</small>";
+      ajustar();
+      setTimeout(function () { t.closePopup(); }, 1800);
+    } catch (e) {
+      msg.innerHTML = '<small class="erro">' + Interdep.esc(e.message || "Não foi possível criar o pedido.") + "</small>";
+      btn.disabled = false; ajustar();
+    }
+  };
+}
+t.render(montar);
+</script>
+</body>
+</html>

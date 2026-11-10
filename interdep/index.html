@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>PMO BigBox – Interdependência</title>
+<script src="https://p.trellocdn.com/power-up.min.js"></script>
+<script src="./config.js"></script>
+<script src="./nucleo.js"></script>
+</head>
+<body>
+<script>
+/* Conector do Power-Up "PMO BigBox – Interdependência" (piloto, só quadros de AREAS).
+ * - Selo no card: calculado do que o quadro já tem (checklist "Interdependências" + anexos-marca). Zero chamada ao servidor.
+ * - Seção no verso do card: só chama o servidor se o card tiver vínculo.
+ * - Painel no quadro: "o que esperamos" e "o que devemos", também sem servidor. */
+(function () {
+  var CFG = window.PMO_INTERDEP || {};
+  var I = window.Interdep;
+  var ICONE = new URL("./icone.svg", location.href).href;
+
+  async function liberado(t) {
+    var b = await t.board("url");
+    var k = I.shortLinkDaUrl(b.url);
+    return (CFG.AREAS || []).some(function (a) { return a.key === k; });
+  }
+
+  var cap = {
+    "card-badges": async function (t) {
+      try {
+        if (!(await liberado(t))) return [];
+        var c = await t.card("checklists", "attachments");
+        return I.selos(c, CFG.AREAS);
+      } catch (e) { return []; }
+    },
+
+    "card-back-section": async function (t) {
+      if (!(await liberado(t))) return;
+      return {
+        title: "Interdependência entre áreas", icon: ICONE,
+        content: { type: "iframe", url: t.signUrl("./secao.html"), height: 120 },
+      };
+    },
+
+    "card-buttons": async function (t) {
+      if (!(await liberado(t))) return [];
+      return [{
+        icon: ICONE, text: "Pedir a outra área",
+        callback: function (t) { return t.popup({ title: "Pedir a outra área", url: "./pedir.html", height: 420 }); },
+      }];
+    },
+
+    "board-buttons": async function (t) {
+      if (!(await liberado(t))) return [];
+      return [{
+        icon: { dark: ICONE, light: ICONE }, text: "Interdependências",
+        callback: function (t) { return t.modal({ title: "Interdependências do quadro", url: "./painel.html", fullscreen: false, height: 560 }); },
+      }];
+    },
+  };
+
+  var opcoes = {};
+  if (CFG.APP_KEY) {
+    opcoes.appKey = CFG.APP_KEY;
+    opcoes.appName = CFG.APP_NAME;
+    cap["authorization-status"] = async function (t) {
+      try { return { authorized: await t.getRestApi().isAuthorized() }; } catch (e) { return { authorized: false }; }
+    };
+    cap["show-authorization"] = function (t) { return t.popup({ title: "Autorizar o Power-Up", url: "./autorizar.html", height: 160 }); };
+  }
+
+  TrelloPowerUp.initialize(cap, opcoes);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="https://p.trellocdn.com/power-up.min.css">
+<link rel="stylesheet" href="./estilo.css">
+<script src="https://p.trellocdn.com/power-up.min.js"></script>
+<script src="./config.js"></script>
+<script src="./api.js"></script>
+</head>
+<body>
+<div id="c">
+<small>O Trello vai pedir "acesso de leitura". Usamos isso só para confirmar quem você é; nada é alterado com a sua conta.</small>
+<button class="mod-primary" id="a" style="width:100%">Autorizar</button>
+<div id="msg"></div>
+</div>
+<script>
+var CFG = window.PMO_INTERDEP || {};
+var t = TrelloPowerUp.iframe({ appKey: CFG.APP_KEY, appName: CFG.APP_NAME });
+document.getElementById("a").onclick = async function () {
+  try { await InterdepApi.autorizar(t); t.closePopup(); }
+  catch (e) { document.getElementById("msg").innerHTML = '<small class="erro">Não foi possível autorizar.</small>'; }
+};
+t.render(function () { t.sizeTo("#c"); });
+</script>
+</body>
+</html>

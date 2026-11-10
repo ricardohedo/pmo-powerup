@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="https://p.trellocdn.com/power-up.min.css">
+<link rel="stylesheet" href="./estilo.css">
+<script src="https://p.trellocdn.com/power-up.min.js"></script>
+<script src="./config.js"></script>
+<script src="./nucleo.js"></script>
+<script src="./api.js"></script>
+</head>
+<body>
+<div id="c"><small>Carregando…</small></div>
+<script>
+var CFG = window.PMO_INTERDEP || {};
+var t = TrelloPowerUp.iframe({ appKey: CFG.APP_KEY, appName: CFG.APP_NAME });
+var c = document.getElementById("c");
+function ajustar() { t.sizeTo(c.offsetHeight + 16); }
+var BOTOES = '<div><button data-acao="pedir">Pedir a outra área</button> <button data-acao="atualizar">Atualizar</button></div>';
+
+async function ver() {
+  var card = await t.card("id", "attachments");
+  // Sem vínculo: nem chama o servidor.
+  if (!Interdep.marcas(card.attachments).length) {
+    c.innerHTML = "<small>Este card não tem pedidos entre áreas.</small>" + BOTOES;
+    return ajustar();
+  }
+  if (!InterdepApi.configurado()) { c.innerHTML = "<small>Power-Up ainda não configurado.</small>"; return ajustar(); }
+  try {
+    c.innerHTML = Interdep.htmlSecao(await InterdepApi.status(t, card.id)) + BOTOES;
+  } catch (e) {
+    c.innerHTML = e.codigo === "sem_autorizacao"
+      ? '<small>Para ver o andamento da outra área, autorize o Power-Up (ele só confirma quem você é).</small><br><button class="mod-primary" data-acao="autorizar">Autorizar</button>'
+      : '<div class="l erro">' + Interdep.esc(e.message || "Não consegui ler o andamento.") + "</div>" + BOTOES;
+  }
+  ajustar();
+}
+
+c.addEventListener("click", async function (ev) {
+  var b = ev.target.closest("button[data-acao]");
+  if (!b) return;
+  var acao = b.dataset.acao;
+  if (acao === "pedir") return t.popup({ title: "Pedir a outra área", url: "./pedir.html", height: 420, mouseEvent: ev });
+  if (acao === "cancelar") {   // confirmação na própria tela (sem confirm() do navegador)
+    b.outerHTML = '<span><small>Cancelar? O card da outra área será arquivado com um comentário.</small> ' +
+      '<button class="mod-danger" data-acao="confirmar" data-id="' + Interdep.esc(b.dataset.id) + '">Sim, cancelar</button> ' +
+      '<button data-acao="atualizar">Não</button></span>';
+    return ajustar();
+  }
+  try {
+    b.disabled = true;
+    if (acao === "autorizar") await InterdepApi.autorizar(t);
+    if (acao === "confirmar") await InterdepApi.cancelar(t, b.dataset.id);
+  } catch (e) {
+    c.insertAdjacentHTML("afterbegin", '<div class="l erro">' + Interdep.esc(e.message || "Não foi possível concluir.") + "</div>");
+    return ajustar();
+  }
+  ver();
+});
+
+t.render(function () { return ver().catch(function () { c.innerHTML = "<small>Não consegui carregar.</small>"; ajustar(); }); });
+</script>
+</body>
+</html>

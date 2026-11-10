@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="https://p.trellocdn.com/power-up.min.css">
+<link rel="stylesheet" href="./estilo.css">
+<style>html, body { overflow: auto; } body { padding: 8px 16px; }</style>
+<script src="https://p.trellocdn.com/power-up.min.js"></script>
+<script src="./config.js"></script>
+<script src="./nucleo.js"></script>
+</head>
+<body>
+<div id="c"><small>Carregando…</small></div>
+<script>
+/* Painel do quadro. Lê só este quadro (o que o Trello já carregou), sem servidor. */
+var t = TrelloPowerUp.iframe();
+t.render(async function () {
+  var c = document.getElementById("c");
+  try {
+    var dados = await Promise.all([t.cards("id", "name", "url", "idList", "due", "dueComplete", "attachments", "checklists"), t.lists("id", "name")]);
+    c.innerHTML = Interdep.htmlPainel(Interdep.painel(dados[0], dados[1], (window.PMO_INTERDEP || {}).AREAS)) +
+      "<p><small>Situação dos pedidos atualizada pelo servidor a cada 15 minutos (ou na hora, ao abrir o card).</small></p>";
+  } catch (e) {
+    c.innerHTML = '<p class="erro">Não consegui ler o quadro.</p>';
+  }
+});
+</script>
+</body>
+</html>

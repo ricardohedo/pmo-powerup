@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="pt-BR">
+<head><meta charset="utf-8"><title>Testes – nucleo.js</title>
+<style>body{font:14px system-ui;padding:16px}.ok{color:#1f845a}.falha{color:#c9372c;font-weight:bold}</style>
+<script src="./nucleo.js"></script>
+</head>
+<body>
+<h1>Testes do nucleo.js</h1>
+<p>Abra este arquivo no navegador. Não usa rede nem Trello.</p>
+<ul id="r"></ul>
+<script>
+var falhas = 0;
+function ok(cond, nome) {
+  if (!cond) falhas++;
+  document.getElementById("r").insertAdjacentHTML("beforeend", '<li class="' + (cond ? "ok" : "falha") + '">' + (cond ? "✓ " : "✗ ") + Interdep.esc(nome) + "</li>");
+}
+var I = Interdep;
+var AREAS = [{ key: "7uckGfR4", nome: "Comercial" }, { key: "b4kXgCbn", nome: "T.I." }];
+
+// marcas
+var m = I.marcas([
+  { name: "↪ Pedido a T.I.: VPN", url: "https://trello.com/c/abc#pmo-interdep&papel=pai&filho=6adba4562e83169412f09370&area=b4kXgCbn" },
+  { name: "Screenful", url: "https://trello.com/c/x#sf-dependencies&dependencyType=blocks" },
+  { name: "sem url" },
+]);
+ok(m.length === 1, "marcas: ignora anexos que não são do Power-Up");
+ok(m[0].papel === "pai" && m[0].filho === "6adba4562e83169412f09370" && m[0].area === "b4kXgCbn", "marcas: lê papel, filho e área");
+
+// resumo e selos
+var cl = [{ name: "Interdependências", checkItems: [
+  { name: "[T.I.] VPN — ✓ Concluído", state: "complete" },
+  { name: "[T.I.] API — ⚠ Atrasado · prazo 01/11", state: "incomplete" },
+  { name: "[T.I.] Relatório — Em andamento · prazo 30/12", state: "incomplete" },
+] }, { name: "Execução - Geral", checkItems: [{ name: "x", state: "incomplete" }] }];
+var r = I.resumoPedidos(cl);
+ok(r.total === 3 && r.feitos === 1 && r.atrasados === 1, "resumo: conta só o checklist Interdependências");
+var s = I.selos({ checklists: cl, attachments: [] }, AREAS);
+ok(s.length === 1 && s[0].color === "red" && s[0].text === "⚠ Aguarda áreas 1/3", "selo pai: vermelho com atraso");
+cl[0].checkItems[1].state = "complete"; cl[0].checkItems[2].state = "complete";
+ok(I.selos({ checklists: cl }, AREAS)[0].color === "green", "selo pai: verde quando tudo concluído");
+var sf = I.selos({ checklists: [], attachments: [{ url: "https://trello.com/c/p#pmo-interdep&papel=filho&pai=1&area=7uckGfR4" }] }, AREAS);
+ok(sf.length === 1 && sf[0].text === "Pedido de Comercial" && sf[0].color === "blue", "selo filho: mostra a área que pediu");
+ok(I.selos({ checklists: [], attachments: [] }, AREAS).length === 0, "selo: nada quando não há vínculo");
+
+// painel
+var ontem = new Date(Date.now() - 864e5).toISOString();
+var p = I.painel([
+  { name: "Projeto X", url: "u1", idList: "L1", checklists: [{ name: "Interdependências", checkItems: [{ name: "[T.I.] A — ⚠ Atrasado", state: "incomplete" }] }], attachments: [] },
+  { name: "Pedido Y", url: "u2", idList: "L1", due: ontem, checklists: [], attachments: [{ url: "x#pmo-interdep&papel=filho&pai=1&area=7uckGfR4" }] },
+  { name: "Pedido Z", url: "u3", idList: "L2", checklists: [], attachments: [{ url: "x#pmo-interdep&papel=filho&pai=1&area=7uckGfR4" }] },
+], [{ id: "L1", name: "Em Execução" }, { id: "L2", name: "Concluídos" }], AREAS);
+ok(p.esperando.length === 1 && p.esperando[0].atrasados === 1, "painel: projeto esperando outra área");
+ok(p.devendo.length === 1 && p.devendo[0].atrasado && p.devendo[0].para === "Comercial", "painel: pedidos em aberto (ignora Concluídos)");
+
+// segurança do HTML
+var h = I.htmlSecao({ pedidos: [{ filhoId: "1", area: "<b>x</b>", titulo: '"><img src=x onerror=alert(1)>', situacao: "na_fila", itens: 0, feitos: 0, pct: null }], origens: [] });
+ok(h.indexOf("<img") < 0 && h.indexOf("&lt;b&gt;") >= 0, "html: escapa texto vindo do Trello");
+ok(I.htmlSecao({ pedidos: [], origens: [] }).indexOf("não tem pedidos") >= 0, "html: mensagem quando vazio");
+ok(I.shortLinkDaUrl("https://trello.com/b/7uckGfR4/teste") === "7uckGfR4", "shortLink da URL do quadro");
+
+document.title = falhas ? "FALHOU (" + falhas + ")" : "OK";
+document.getElementById("r").insertAdjacentHTML("afterend", "<h2 class='" + (falhas ? "falha" : "ok") + "'>" + document.title + "</h2>");
+</script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__claude_ai_Trello__trelloReadCard",
+      "mcp__claude_ai_Trello__trelloSearch",
+      "mcp__claude_ai_Trello__trelloReadBoard",
+      "mcp__claude_ai_Trello__trelloReadMember",
+      "mcp__claude_ai_Trello__trelloReadList",
+      "mcp__claude-in-chrome__tabs_context_mcp",
+      "mcp__claude-in-chrome__find",
+      "mcp__claude-in-chrome__get_page_text",
+      "mcp__claude-in-chrome__read_page",
+      "mcp__claude-in-chrome__read_console_messages",
+      "mcp__claude_ai_Claude_Docs__guide"
+    ]
+  }
+}

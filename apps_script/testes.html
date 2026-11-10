@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="pt-BR">
+<head><meta charset="utf-8"><title>Testes – Interdep.gs</title>
+<style>body{font:14px system-ui;padding:16px}.ok{color:#1f845a}.falha{color:#c9372c;font-weight:bold}</style>
+<script>
+// Simula o mínimo do Apps Script usado pelas regras puras.
+var Utilities = { formatDate: function (d, tz, f) {
+  var p = new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", year: "numeric" }).formatToParts(d);
+  var g = function (t) { return p.find(function (x) { return x.type === t; }).value; };
+  return f.replace("dd", g("day")).replace("MM", g("month")).replace("yyyy", g("year"));
+} };
+</script>
+<script src="./Interdep.gs"></script>
+</head>
+<body>
+<h1>Testes das regras do servidor (Interdep.gs)</h1>
+<ul id="r"></ul>
+<script>
+var falhas = 0;
+function ok(cond, nome) {
+  if (!cond) falhas++;
+  document.getElementById("r").insertAdjacentHTML("beforeend", '<li class="' + (cond ? "ok" : "falha") + '">' + (cond ? "✓ " : "✗ ") + nome + "</li>");
+}
+var futuro = new Date(Date.now() + 5 * 864e5).toISOString(), passado = new Date(Date.now() - 864e5).toISOString();
+ok(situacao(null) === "removido", "situação: card removido");
+ok(situacao({ closed: true, list: { name: "Em Execução" } }) === "arquivado", "situação: arquivado");
+ok(situacao({ list: { name: "Concluídos" }, due: passado }) === "concluido", "situação: lista Concluídos vence o atraso");
+ok(situacao({ dueComplete: true, list: { name: "Em Execução" } }) === "concluido", "situação: data marcada como concluída");
+ok(situacao({ list: { name: "Em Execução" }, due: passado }) === "atrasado", "situação: prazo vencido");
+ok(situacao({ list: { name: "➕ NOVA DEMANDA — Criar aqui" }, due: futuro }) === "na_fila", "situação: na fila");
+ok(situacao({ list: { name: "Em Execução" }, due: futuro }) === "em_andamento", "situação: em andamento");
+
+var ms = marcas({ attachments: [{ id: "a1", url: "https://trello.com/c/x/1#pmo-interdep&papel=pai&filho=abc&area=b4kXgCbn" }, { id: "a2", url: "https://x.com" }] });
+ok(ms.length === 1 && ms[0].papel === "pai" && ms[0].filho === "abc" && ms[0].idAnexo === "a1", "marcas: lê o anexo do vínculo");
+
+var item = nomeItem({ area: "b4kXgCbn", titulo: "Liberar VPN" }, { list: { name: "Em Execução" }, due: passado });
+ok(item.indexOf("[Processos (teste)] Liberar VPN — ⚠ Atrasado · prazo ") === 0, "item: texto com área, título e atraso (" + item + ")");
+ok(nomeItem({ area: "x", titulo: "T" }, { list: { name: "Concluídos" } }) === "[x] T — ✓ Concluído", "item: concluído sem prazo");
+
+ok(progresso({ checklists: [{ name: "Interdependências", checkItems: [{ state: "incomplete" }] }, { name: "Plan", checkItems: [{ state: "complete" }, { state: "incomplete" }] }] }).pct === 50, "progresso: ignora o checklist Interdependências");
+
+// Descrição real (card "Implantação da Gestão de Ofertas", quadro de teste do Comercial)
+var desc = "#### ***OBJETIVO DO PROJETO***\nImplantar um modelo...\n\n#### ***ESCOPO***\n**•\tEscopo:**\n\n**o\tIncluído**\n**\tMapeamento do Processo Atual de Ofertas**\n•\tLevantar práticas atuais.\n\n**o\tExcluído**\n\tDesenvolvimento de sistemas.\n\n#### ***OBSERVAÇÕES***\n[Dependências de outras áreas]";
+var e = escopo(desc);
+ok(e.indexOf("Mapeamento do Processo") >= 0 && e.indexOf("Desenvolvimento de sistemas") >= 0 && e.indexOf("OBSERVAÇÕES") < 0 && e.indexOf("OBJETIVO") < 0, "escopo: pega só a seção ESCOPO (formato ####)");
+ok(escopo("**OBJETIVO DO PROJETO**\nx\n\n**ESCOPO**\n[O que está incluído]\n\n**OBSERVAÇÕES**\ny") === "[O que está incluído]", "escopo: formato **ESCOPO**");
+ok(escopo("sem seções") === "", "escopo: vazio quando não há seção");
+ok(escopo("ESCOPO\n" + "a".repeat(2000)).length === 1501, "escopo: corta em 1500 caracteres");
+
+document.title = falhas ? "FALHOU (" + falhas + ")" : "OK";
+document.getElementById("r").insertAdjacentHTML("afterend", "<h2 class='" + (falhas ? "falha" : "ok") + "'>" + document.title + "</h2>");
+</script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+html, body { overflow: hidden; }
+body { font: 14px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #172b4d; margin: 0; padding: 4px 6px; }
+h3 { margin: 12px 0 6px; font-size: 14px; }
+h4 { margin: 10px 0 4px; font-size: 13px; color: #44546f; }
+h5 { margin: 8px 0 2px; font-size: 12px; color: #44546f; }
+small { color: #626f86; }
+ul { margin: 4px 0 0; padding-left: 18px; }
+.l { border: 1px solid #dfe1e6; border-radius: 6px; padding: 8px; margin: 0 0 8px; }
+.l.erro, .erro { border-color: #c9372c; }
+.erro:not(.l) { color: #c9372c; }
+.t { display: inline-block; border-radius: 3px; padding: 1px 6px; color: #fff; font-size: 12px; }
+.red { background: #c9372c; } .yellow { background: #7f5f01; } .green { background: #1f845a; } .gray { background: #626f86; }
+.vermelho { color: #c9372c; }
+.barra { background: #dfe1e6; border-radius: 4px; height: 8px; margin: 6px 0 2px; }
+.barra div { background: #1f845a; height: 8px; border-radius: 4px; }
+.escopo { font-size: 13px; background: #f7f8f9; border-radius: 4px; padding: 6px; max-height: 160px; overflow: auto; }
+.vazio { color: #626f86; font-style: italic; }
+button { margin-top: 6px; }
+label { display: block; margin: 8px 0 2px; font-weight: 600; font-size: 13px; }
+input, select, textarea { width: 100%; box-sizing: border-box; }
+textarea { min-height: 70px; }
