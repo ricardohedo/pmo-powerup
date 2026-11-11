@@ -53,7 +53,13 @@ Listas padrão: "➕ NOVA DEMANDA — Criar aqui", "Backlog de Projetos", "Prior
 - Servidor publicado e respondendo (`doGet` → `{"ok":true}`; POST sem token → 401, como esperado).
 - Power-Up registrado pela conta BigBox; `config.js` preenchido e no `main`.
 - Removido: projeto Apps Script criado por engano na conta pessoal (lixeira do Drive) e o Power-Up criado por engano pela conta Trello pessoal (excluído).
+- Power-Up ativado nos 3 quadros de TESTE (via API `POST /1/boards/<id>/boardPlugins`). No Trello novo, o botão "Interdependências" fica dentro do menu **Power-Ups** do quadro.
+- **Teste de ponta a ponta OK** (card "teste interd2", Comercial → Processos): pedido criou card na NOVA DEMANDA de Processos com descrição, prazo e anexo de volta; origem ganhou anexo + item no checklist; ao mover o card de Processos para Concluídos e clicar "Atualizar", o item virou "✓ Concluído" e foi marcado; "Cancelar pedido" arquivou o card de Processos e limpou item e anexo da origem.
+- No 1º uso, cada pessoa precisa clicar **Permitir** numa janela do Trello (acesso só de leitura). Se o Chrome bloquear pop-up, liberar para trello.com.
+- Removidas as 2 dependências de estudo da Screenful (teste interd2↔teste interd10; Otimização de Pricing↔Padronização Etiquetas). **Ficaram** outras da Screenful no TESTE Comercial (ex.: "Implantação da Gestão de Ofertas no sistema Consinco") — não mexer sem perguntar.
+- Sobra inofensiva: checklist "Interdependências" vazio no card "teste interd2".
 - Próximos passos:
-  1. Ativar o Power-Up nos 3 quadros de TESTE e testar Comercial → Processos.
-  2. Remover do TESTE Comercial as 2 dependências de estudo da Screenful (Padronização Etiquetas ↔ Otimização de Pricing; teste interd2 → teste interd10). Autorizado pelo usuário.
+  1. Decidir se desativa o Power-Up antigo "PMO BigBox - Interdependência v2 (teste)" nos quadros de teste (ele mostra uma 2ª seção com o mesmo título no card). Não excluir o app v2: a `TRELLO_KEY` do servidor é dele.
+  2. Testar com uma pessoa que **não** é membro do quadro de destino (prova da privacidade).
   3. Montar teste automático (Playwright) com login salvo.
+  4. Renovar o `TRELLO_TOKEN` antes de 10/12/2026.
