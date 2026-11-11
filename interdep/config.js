@@ -4,8 +4,8 @@
  *  - APP_KEY: chave de API do Power-Up (admin do Trello). Tem de ser a mesma da propriedade APP_KEY do servidor.
  * Enquanto estiverem vazios o Power-Up mostra "ainda não configurado" e não chama nada. */
 window.PMO_INTERDEP = {
-  API_URL: "",
-  APP_KEY: "",
+  API_URL: "https://script.google.com/macros/s/AKfycbw0--rEpAVoqgIfXoBs8ZGt_AsMyt69YKF3xCnqZ2lBFFZo2yWmkw4Wqith_Jx-yPer/exec",
+  APP_KEY: "9233eafb60c6769f1ad5cdf2da2123b5",
   APP_NAME: "PMO BigBox – Interdependência",
   // key = shortLink do quadro (trello.com/b/<shortLink>/...). Mantenha igual ao AREAS do servidor.
   AREAS: [
